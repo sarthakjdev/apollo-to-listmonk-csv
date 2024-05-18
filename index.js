@@ -3,6 +3,9 @@ const path = require("node:path");
 const csvtojsonConverter = require("csvtojson");
 const jsonToCsvConverter = require("json-2-csv");
 
+const validEmailRegex =
+  /^(([^<>()[\].,;:\s@"]+(\.[^<>()[\].,;:\s@"]+)*)|(".+"))@(([^<>()[\].,;:\s@"]+\.)+[^<>()[\].,;:\s@"]{2,})$/i;
+
 async function csvToJson() {
   const filePath = process.argv[2];
   const jsonArray = await csvtojsonConverter({ delimiter: "," }).fromFile(
@@ -83,11 +86,24 @@ function parseApolloJsonToListmonkCom(data) {
   return result;
 }
 
+function isValidEmailAddress(email) {
+  if (!email || !validEmailRegex.test(email)) {
+    return false;
+  }
+  return true;
+}
+
 function parseInstantScraperJsonToListmonkCompatibleJson(data) {
   const result = data.map((item) => {
     const objectToReturn = {
       name: item["Name"] || item["name"],
-      email: item["Email"] || item["email"],
+      email: isValidEmailAddress(item["Email"])
+        ? item["Email"]
+        : isValidEmailAddress(item["email"])
+        ? item["email"]
+        : isValidEmailAddress(item["Email2"])
+        ? item["Email2"]
+        : "",
       attributes: {},
     };
 
